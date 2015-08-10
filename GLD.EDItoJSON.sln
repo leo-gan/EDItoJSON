@@ -7,6 +7,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLD.EDItoJSON.Parser", "GLD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLD.EDItoJSON.Model", "GLD.EDItoJSON.Model\GLD.EDItoJSON.Model.csproj", "{9CB1CE83-91F5-4639-A2D8-9B112D76B8E3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{1C7247FB-D137-4EDB-BBFC-C730236B345F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "Tests\UnitTests\UnitTests.csproj", "{460F2573-6C5D-4BD1-B712-75E04DCE7004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GLD.EDItoJSON.ErrorHandling", "GLD.EDItoJSON.ErrorHandling\GLD.EDItoJSON.ErrorHandling.csproj", "{5366C4F7-5B8A-4393-8499-5447781BA41C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,8 +27,19 @@ Global
 		{9CB1CE83-91F5-4639-A2D8-9B112D76B8E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9CB1CE83-91F5-4639-A2D8-9B112D76B8E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9CB1CE83-91F5-4639-A2D8-9B112D76B8E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{460F2573-6C5D-4BD1-B712-75E04DCE7004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{460F2573-6C5D-4BD1-B712-75E04DCE7004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{460F2573-6C5D-4BD1-B712-75E04DCE7004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{460F2573-6C5D-4BD1-B712-75E04DCE7004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5366C4F7-5B8A-4393-8499-5447781BA41C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5366C4F7-5B8A-4393-8499-5447781BA41C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5366C4F7-5B8A-4393-8499-5447781BA41C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5366C4F7-5B8A-4393-8499-5447781BA41C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{460F2573-6C5D-4BD1-B712-75E04DCE7004} = {1C7247FB-D137-4EDB-BBFC-C730236B345F}
 	EndGlobalSection
 EndGlobal

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GLD.EDItoJSON.ErrorHandling;
 using GLD.EDItoJSON.Model;
 using Newtonsoft.Json;
 
@@ -29,15 +30,15 @@ namespace GLD.EDItoJSON.Parser
 
             var interchange = new Interchange {SegmentSeparator = GetSegmentSeparator(inputFileName)};
 
-            Segment[] segments = ReadAllSegments(inputFileName, interchange.SegmentSeparator);
+            List<Segment> segments = ReadAllSegments(inputFileName, interchange.SegmentSeparator);
 
             var currentGroup = new Group();
             var currentDocument = new Document();
 
             // traverse all segments:
-            interchange.ISASegment = ParseISA(segments[0]);
+            interchange.ISASegment = ISASegment.Parse(segments[0]);
 
-            for (int i = 1; i < segments.Length; i++)
+            for (int i = 1; i < segments.Count; i++)
             {
                 switch (segments[i].Name)
                 {
@@ -58,12 +59,18 @@ namespace GLD.EDItoJSON.Parser
                         interchange.Groups.Add(currentGroup);
                         break;
                     case "IEA":
-                        interchange.IEASegment = ParseIEA(segments[i]);
+                        interchange.IEASegment.Parse(segments[i]);
                         break;
                     default:
                         currentDocument.Segments.Add(segments[i]);
                         break;
                 }
+            }
+            // Check if errors happened and Validate the top level EDI structure, like missed IEA segment.
+            if (!interchange.IsValid() || Errors.Log.Count != 0)
+            {
+                Errors.Report();
+                return;
             }
 
             // create JSON:
@@ -93,24 +100,34 @@ namespace GLD.EDItoJSON.Parser
             throw new NotImplementedException();
         }
 
-        private static IEASegment ParseIEA(Segment segment)
+  
+  
+        private static List<Segment> ReadAllSegments(string fileName, char segmentSeparator)
         {
-            throw new NotImplementedException();
+            var segments = new List<Segment>();
+            using (var stream = new StreamReader(fileName))
+            {
+                segments.Add(ParseSegment(stream.ReadLine(), segmentSeparator)); // TODO: read a segment with a segment separator specified. Not it is CR LF
+            }
+            return segments;
         }
 
-        private static ISASegment ParseISA(Segment segment)
+        private static Segment ParseSegment(string line, char segmentSeparator)
         {
-            throw new NotImplementedException();
-        }
-
-        private static Segment[] ReadAllSegments(string fileName, char segmentSeparator)
-        {
-            throw new NotImplementedException();
+            var elements = line.Split(segmentSeparator);
+            Errors.Validate(() => elements.Length == 0, string.Format("Line {0} cannot be parsed. It cannot be splitted with {1} separator.", line, segmentSeparator));
+            Errors.Validate(() => elements.Length == 1,
+                string.Format("Line {0} cannot be parsed. With {1} separator it has only one element.", line,
+                    segmentSeparator));
+            
+            var segment = new Segment(elements[0]);
+            Array.Copy(elements, 1, segment.Elements, 0, elements.Length - 1);
+            return segment;
         }
 
         private static char GetSegmentSeparator(string fileName)
         {
-            return '*'; // TODO read it from ISA
+            return '~'; // TODO read it from ISA
         }
 
         /// Data Element Separator follows after 'ISA' and usually it equals '*' 

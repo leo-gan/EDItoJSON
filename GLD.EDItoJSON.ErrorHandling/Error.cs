@@ -34,9 +34,11 @@ namespace GLD.EDItoJSON.ErrorHandling
        /// </summary>
        /// <param name="validateFunc"></param>
        /// <param name="errorText"></param>
-        public static void Validate(Func<bool> validateFunc ,string errorText)
-        {
-           if (!validateFunc()) NewError(errorText);
-        }
+        public static bool Assert(Func<bool> validateFunc ,string errorText)
+       {
+           var result = validateFunc();
+           if (!result) NewError(errorText);
+           return result;
+       }
     }
 }

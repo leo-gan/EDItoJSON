@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NUnit.Framework;
 
 namespace UnitTests
 {
-    public class Class1
+    [TestFixture]
+    public class Parser
     {
+        [Test]
+        [TestCase("")]
+        private void Success(string inputFilePath)
+        {
+        }
     }
 }

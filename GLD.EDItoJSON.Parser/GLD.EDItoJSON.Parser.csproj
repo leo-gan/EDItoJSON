@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Samples\835.Sample.txt" />
+    <Content Include="Samples\835.Sample.txt.Output.js" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GLD.EDItoJSON.ErrorHandling\GLD.EDItoJSON.ErrorHandling.csproj">
@@ -63,7 +64,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Samples\835.Sample_output.js" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

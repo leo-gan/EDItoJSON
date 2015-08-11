@@ -28,38 +28,38 @@ namespace GLD.EDItoJSON.Parser
             var inputFileName = args[0];
             var outputFileName = args[1];
 
-            var interchange = new Interchange {SegmentSeparator = GetSegmentSeparator(inputFileName)};
+            var interchange = new Interchange {SegmentSeparator = GetSegmentSeparator(inputFileName), DataElementSeparator = GetDataElementSeparator(inputFileName), DataComponentSeparator = GetDataComponentSeparator(inputFileName)};
 
-            List<Segment> segments = ReadAllSegments(inputFileName, interchange.SegmentSeparator);
+            List<Segment> segments = ReadAllSegments(inputFileName, interchange.SegmentSeparator, interchange.DataElementSeparator);
 
             var currentGroup = new Group();
             var currentDocument = new Document();
 
             // traverse all segments:
-            interchange.ISASegment = ISASegment.Parse(segments[0]);
+            interchange.ISASegment = new ISASegment(segments[0]);
 
-            for (int i = 1; i < segments.Count; i++)
+            for (var i = 1; i < segments.Count; i++)
             {
                 switch (segments[i].Name)
                 {
                     case "ST":
                         currentDocument = new Document(); 
-                        currentDocument.STSegment = ParseST(segments[i]);
+                        currentDocument.STSegment = new STSegment(segments[i]);
                         break;
                     case "SE":
-                        currentDocument.SESegment = ParseSE(segments[i]);
+                        currentDocument.SESegment = new SESegment(segments[i]);
                         currentGroup.Documents.Add(currentDocument);
                         break;
                     case "GS":
                         currentGroup = new Group(); 
-                        currentGroup.GSSegment = ParseGS(segments[i]);
+                        currentGroup.GSSegment = new GSSegment(segments[i]);
                         break;
                     case "GE":
-                        currentGroup.GESegment = ParseGE(segments[i]);
+                        currentGroup.GESegment = new GESegment(segments[i]);
                         interchange.Groups.Add(currentGroup);
                         break;
                     case "IEA":
-                        interchange.IEASegment.Parse(segments[i]);
+                        interchange.IEASegment = new IEASegment(segments[i]);
                         break;
                     default:
                         currentDocument.Segments.Add(segments[i]);
@@ -80,47 +80,26 @@ namespace GLD.EDItoJSON.Parser
             File.WriteAllText(outputFileName, serializedInterchange);
         }
 
-        private static SESegment ParseSE(Segment segment)
+    
+       
+
+
+        private static List<Segment> ReadAllSegments(string fileName, char segmentSeparator, char dataElementSeparator)
         {
-            throw new NotImplementedException();
+            var allLines = File.ReadAllLines(fileName); // TODO: use segmentSeparator
+            return allLines.Select(line => ParseSegment(line, dataElementSeparator)).ToList();
         }
 
-        private static STSegment ParseST(Segment segment)
+        private static Segment ParseSegment(string line, char dataElementSeparator)
         {
-            throw new NotImplementedException();
-        }
-
-        private static GESegment ParseGE(Segment segment)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static GSSegment ParseGS(Segment segment)
-        {
-            throw new NotImplementedException();
-        }
-
-  
-  
-        private static List<Segment> ReadAllSegments(string fileName, char segmentSeparator)
-        {
-            var segments = new List<Segment>();
-            using (var stream = new StreamReader(fileName))
-            {
-                segments.Add(ParseSegment(stream.ReadLine(), segmentSeparator)); // TODO: read a segment with a segment separator specified. Not it is CR LF
-            }
-            return segments;
-        }
-
-        private static Segment ParseSegment(string line, char segmentSeparator)
-        {
-            var elements = line.Split(segmentSeparator);
-            Errors.Validate(() => elements.Length == 0, string.Format("Line {0} cannot be parsed. It cannot be splitted with {1} separator.", line, segmentSeparator));
+            var elements = line.Split(dataElementSeparator);
+            Errors.Validate(() => elements.Length == 0, string.Format("Line {0} cannot be parsed. It cannot be splitted with {1} separator.", line, dataElementSeparator));
             Errors.Validate(() => elements.Length == 1,
                 string.Format("Line {0} cannot be parsed. With {1} separator it has only one element.", line,
-                    segmentSeparator));
+                    dataElementSeparator));
             
             var segment = new Segment(elements[0]);
+            segment.Elements = new string[elements.Length];
             Array.Copy(elements, 1, segment.Elements, 0, elements.Length - 1);
             return segment;
         }
@@ -131,10 +110,13 @@ namespace GLD.EDItoJSON.Parser
         }
 
         /// Data Element Separator follows after 'ISA' and usually it equals '*' 
-       public char GetDataElementSeparator()
+       public static char GetDataElementSeparator(string fileName)
        {
            return '*';
        }
-        
+    private static char GetDataComponentSeparator(string inputFileName)
+        {
+            return ':'; // TODO read it from ISA
+        }
     }
 }

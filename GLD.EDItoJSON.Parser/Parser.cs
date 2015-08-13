@@ -21,14 +21,28 @@ namespace GLD.EDItoJSON.Parser
 
             var errors = new Errors();
 
+            char segmentSeparator, dataElementSeparator, dataComponentSeparator;
+
+
+            var lines = GetLinesAndSeparators(inputFileName, errors, out segmentSeparator, out dataElementSeparator,
+                out dataComponentSeparator);
+
+           // Separator errors are FATAL errors!
+            if (errors.Logs.Count != 0)
+            {
+                errors.Report();
+                File.WriteAllLines(errorsFileName, errors.Logs);
+                return;
+            }
+
             var interchange = new Interchange
             {
-                SegmentSeparator = GetSegmentSeparator(inputFileName),
-                DataElementSeparator = GetDataElementSeparator(inputFileName),
-                DataComponentSeparator = GetDataComponentSeparator(inputFileName)
+                SegmentSeparator = segmentSeparator,
+                DataElementSeparator = dataElementSeparator,
+                DataComponentSeparator = dataComponentSeparator
             };
 
-            var segments = ReadAllSegments(inputFileName, interchange.SegmentSeparator, interchange.DataElementSeparator,
+            var segments = ReadAllSegments(lines, interchange.SegmentSeparator, interchange.DataElementSeparator,
                 errors);
 
             TraversAllSegments(interchange, segments, errors);
@@ -50,6 +64,49 @@ namespace GLD.EDItoJSON.Parser
             Console.WriteLine("Success.");
             //Console.WriteLine("Press Enter to finish.");
             //Console.ReadLine();
+        }
+
+        /// <summary>
+        /// It works as a fully autonomus function regards to reading from EDI file, 
+        ///   because the real EDI file parsing is possible only after the separator parsing.
+        /// </summary>
+        /// <param name="inputFileName"></param>
+        /// <param name="errors"></param>
+        /// <param name="segmentSeparator">It can be a magic value 'C'. It means CR+LF line separator. We use CR+LF by default. 
+        /// If it is NOT 'C', we use the value of segmentSeparator. </param>
+        /// <param name="dataElementSeparator"></param>
+        /// <param name="dataComponentSeparator"></param>
+        private static string[] GetLinesAndSeparators(string inputFileName, Errors errors, out char segmentSeparator, out char dataElementSeparator, out char dataComponentSeparator)
+        {
+            segmentSeparator = '~';
+            dataElementSeparator = '*';
+            dataComponentSeparator = ':';
+
+            // Segment separator is placed right after "ISA" tag of the first segment.
+            var lines = File.ReadLines(inputFileName).ToArray();
+            if (lines.Length == 0)
+            {
+                errors.NewError(string.Format("No text provided for parsing in the EDI file:'{0}'", inputFileName));
+                return null;
+            }
+
+            var symbols = lines[0].ToCharArray();
+            if (symbols.Length < 105)
+            {
+                errors.NewError(string.Format("The first line of the text '{0}' is too short to get a sub-element separator", lines[0]));
+                return null;
+            }
+
+            dataElementSeparator = symbols[103];
+            dataComponentSeparator = symbols[104];
+            if (lines.Length > 1)
+                segmentSeparator = 'C'; // It is a magic number. It means CR+LF line separator. We use CR+LF by default. If it is NOT 'C', we use the value of segmentSeparator. 
+            else
+            {
+                segmentSeparator = symbols[105];
+            }
+
+            return lines;
         }
 
         private static void TraversAllSegments(Interchange interchange, IReadOnlyList<Segment> segments, Errors errors)
@@ -93,7 +150,7 @@ namespace GLD.EDItoJSON.Parser
                             errors.NewError(string.Format("Segment:'{0}' placed before ST segment", segments[i].AsString));
                         break;
                     case "GS":
-                        currentGroup = new Group();
+                        currentGroup =  new Group();
                         currentGroup.GSSegment = new GSSegment(segments[i].Elements);
                         break;
                     case "GE":
@@ -122,16 +179,27 @@ namespace GLD.EDItoJSON.Parser
             interchange.Validate(errors);
         }
 
-        private static List<Segment> ReadAllSegments(string fileName, char segmentSeparator, char dataElementSeparator,
+        private static List<Segment> ReadAllSegments(string[] allLines, char segmentSeparator, char dataElementSeparator,
             Errors errors)
         {
-            var allLines = File.ReadAllLines(fileName); // TODO: use segmentSeparator
+            string[] segmentLines = allLines;
+            // by default segments are separated by CR+LF and allLines represent the segment lines.
+            // But if allLines is one line, it must be separated by the segmentSeparator.
+            if (allLines.Length == 1)
+                segmentLines = allLines[0].Split(segmentSeparator);
 
-            for (int index = 0; index < allLines.Length; index++)
-                if (string.IsNullOrWhiteSpace(allLines[index]))
+            if (segmentLines == null || segmentLines.Length < 4)
+            {
+                    errors.NewError(string.Format("FATAL ERROR: EDI file cannot be parsed. The segment separator is '{0}' and it cannot separate text on segments. ",
+                        segmentSeparator));
+                return null;
+            }
+
+            for (int index = 0; index < segmentLines.Length; index++)
+                if (string.IsNullOrWhiteSpace(segmentLines[index]))
                     errors.NewError(string.Format("Line[{0}] is Empty. It cannot be parsed.", index+1));
 
-            return allLines.Select(line => ParseSegment(line, dataElementSeparator, errors)).ToList();
+            return segmentLines.Select(line => ParseSegment(line, dataElementSeparator, errors)).ToList();
         }
 
         private static Segment ParseSegment(string line, char dataElementSeparator, Errors errors)
@@ -147,22 +215,6 @@ namespace GLD.EDItoJSON.Parser
                 elements[index] = elements[index].Trim();
 
             return new Segment(elements);
-        }
-
-        private static char GetSegmentSeparator(string fileName)
-        {
-            return '~'; // TODO read it from ISA
-        }
-
-        /// Data Element Separator follows after 'ISA' and usually it equals '*'
-        public static char GetDataElementSeparator(string fileName)
-        {
-            return '*';
-        }
-
-        private static char GetDataComponentSeparator(string inputFileName)
-        {
-            return ':'; // TODO read it from ISA
         }
     }
 }

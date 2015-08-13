@@ -5,9 +5,13 @@ namespace GLD.EDItoJSON.IOProvider
 {
     public class FileProvider : IProvider
     {
-        public IEnumerable<string> ReadAllLines(string filePath)
+        /// <summary>
+        /// It alwas read form InputAddress.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<string> ReadAllLines()
         {
-            return File.ReadAllLines(filePath);
+            return File.ReadAllLines(InputAddress);
         }
 
         public void WriteAllLines(string address, IEnumerable<string> lines)
@@ -19,5 +23,9 @@ namespace GLD.EDItoJSON.IOProvider
         {
             File.WriteAllText(address, text);
         }
+
+        public string InputAddress { get; set; }
+        public string OutputAddress { get { return InputAddress + ".Output.js"; }  set {}}
+        public string ErrorsAddress { get { return InputAddress + ".Errors.txt"; } set {} }
     }
 }

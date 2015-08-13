@@ -19,12 +19,11 @@ namespace GLD.EDItoJSON.Parser
         /// <param name="inputFileName"></param>
         public void Parse(string inputFileName)
         {
-            var outputFileName = inputFileName + ".Output.js";
-            var errorsFileName = inputFileName + ".Errors.txt";
-
+            fileProvider.InputAddress = inputFileName;
+ 
             char segmentSeparator, dataElementSeparator, dataComponentSeparator;
 
-            var lines = GetLinesAndSeparators(fileProvider, inputFileName, errors, out segmentSeparator,
+            var lines = GetLinesAndSeparators(fileProvider, errors, out segmentSeparator,
                 out dataElementSeparator,
                 out dataComponentSeparator);
 
@@ -32,7 +31,7 @@ namespace GLD.EDItoJSON.Parser
             if (errors.Logs.Count != 0)
             {
                 errors.Report();
-                fileProvider.WriteAllLines(errorsFileName, errors.Logs);
+                fileProvider.WriteAllLines(fileProvider.ErrorsAddress, errors.Logs);
                 return;
             }
 
@@ -52,7 +51,7 @@ namespace GLD.EDItoJSON.Parser
             if (errors.Logs.Count != 0)
             {
                 errors.Report();
-                fileProvider.WriteAllLines(errorsFileName, errors.Logs);
+                fileProvider.WriteAllLines(fileProvider.ErrorsAddress, errors.Logs);
                 return;
             }
 
@@ -60,7 +59,7 @@ namespace GLD.EDItoJSON.Parser
             var serializedInterchange = JsonConvert.SerializeObject(interchange, Formatting.Indented);
 
             // output JSON:
-            fileProvider.WriteAllText(outputFileName, serializedInterchange);
+            fileProvider.WriteAllText(fileProvider.OutputAddress, serializedInterchange);
 
             Console.WriteLine("Success.");
             //Console.WriteLine("Press Enter to finish.");
@@ -79,7 +78,7 @@ namespace GLD.EDItoJSON.Parser
         /// </param>
         /// <param name="dataElementSeparator"></param>
         /// <param name="dataComponentSeparator"></param>
-        private static string[] GetLinesAndSeparators(IProvider fileProvider, string inputFileName, Errors errors,
+        private static string[] GetLinesAndSeparators(IProvider fileProvider, Errors errors,
             out char segmentSeparator,
             out char dataElementSeparator, out char dataComponentSeparator)
         {
@@ -88,10 +87,10 @@ namespace GLD.EDItoJSON.Parser
             dataComponentSeparator = ':';
 
             // Segment separator is placed right after "ISA" tag of the first segment.
-            var lines = fileProvider.ReadAllLines(inputFileName).ToArray();
+            var lines = fileProvider.ReadAllLines().ToArray();
             if (lines.Length == 0)
             {
-                errors.NewError(string.Format("No text provided for parsing in the EDI file:'{0}'", inputFileName));
+                errors.NewError(string.Format("No text provided for parsing in the EDI file:'{0}'", fileProvider.InputAddress));
                 return null;
             }
 
@@ -106,13 +105,7 @@ namespace GLD.EDItoJSON.Parser
 
             dataElementSeparator = symbols[103];
             dataComponentSeparator = symbols[104];
-            if (lines.Length > 1)
-                segmentSeparator = 'C';
-            // It is a magic number. It means CR+LF line separator. We use CR+LF by default. If it is NOT 'C', we use the value of segmentSeparator. 
-            else
-            {
-                segmentSeparator = symbols[105];
-            }
+            segmentSeparator = lines.Length > 1 ? 'C' : symbols[105];
 
             return lines;
         }

@@ -24,7 +24,9 @@ namespace GLD.EDItoJSON.Parser
             //Console.WriteLine("Parser Started: Input file:{0}", args[0]);
             //var inputFileName = args[0];
             var outputFileName = inputFileName + ".Output.js";
-            var errorsFileName = inputFileName + ".Errors.js";
+            var errorsFileName = inputFileName + ".errors.js";
+
+            var errors = new Errors();
 
             var interchange = new Interchange
             {
@@ -33,15 +35,15 @@ namespace GLD.EDItoJSON.Parser
                 DataComponentSeparator = GetDataComponentSeparator(inputFileName)
             };
 
-            var segments = ReadAllSegments(inputFileName, interchange.SegmentSeparator, interchange.DataElementSeparator);
+            var segments = ReadAllSegments(inputFileName, interchange.SegmentSeparator, interchange.DataElementSeparator, errors);
 
-            TraversAllSegments(interchange, segments);
+            TraversAllSegments(interchange, segments, errors);
 
             // Check if errors happened and Assert the top level EDI structure, like missed IEA segment.
-            if (Errors.Logs.Count != 0)
+            if (errors.Logs.Count != 0)
             {
-                Errors.Report();
-                File.WriteAllText(errorsFileName, JsonConvert.SerializeObject(Errors.Logs));
+                errors.Report();
+                File.WriteAllText(errorsFileName, JsonConvert.SerializeObject(errors.Logs));
                 return;
             }
 
@@ -52,16 +54,16 @@ namespace GLD.EDItoJSON.Parser
             File.WriteAllText(outputFileName, serializedInterchange);
 
             Console.WriteLine("Success.");
-            Console.WriteLine("Press Enter to finish.");
-            Console.ReadLine();
+            //Console.WriteLine("Press Enter to finish.");
+            //Console.ReadLine();
         }
 
-        private static void TraversAllSegments(Interchange interchange, List<Segment> segments)
+        private static void TraversAllSegments(Interchange interchange, List<Segment> segments, Errors errors)
         {
             var currentGroup = new Group();
             var currentDocument = new Document();
 
-            if( !Errors.Assert(() => segments[0].Name == "ISA", "FATAL Error: The first segment ('" + segments[0].Name + "') is not ISA segment.") )
+            if( !errors.Assert(() => segments[0].Name == "ISA", "FATAL Error: The first segment ('" + segments[0].Name + "') is not ISA segment.") )
                 return; // FATAL error
 
             interchange.ISASegment = new ISASegment(segments[0].Elements);
@@ -94,21 +96,24 @@ namespace GLD.EDItoJSON.Parser
                         break;
                 }
             }
+
+            // Validate a new interchange:
+            interchange.Validate(errors);
         }
 
-        private static List<Segment> ReadAllSegments(string fileName, char segmentSeparator, char dataElementSeparator)
+        private static List<Segment> ReadAllSegments(string fileName, char segmentSeparator, char dataElementSeparator, Errors errors)
         {
             var allLines = File.ReadAllLines(fileName); // TODO: use segmentSeparator
-            return allLines.Select(line => ParseSegment(line, dataElementSeparator)).ToList();
+            return allLines.Select(line => ParseSegment(line, dataElementSeparator, errors)).ToList();
         }
 
-        private static Segment ParseSegment(string line, char dataElementSeparator)
+        private static Segment ParseSegment(string line, char dataElementSeparator, Errors errors)
         {
             var elements = line.Split(dataElementSeparator);
-            Errors.Assert(() => elements.Length != 0,
+            errors.Assert(() => elements.Length != 0,
                 string.Format("Line {0} cannot be parsed. It cannot be split with {1} separator.", line,
                     dataElementSeparator));
-            Errors.Assert(() => elements.Length != 1,
+            errors.Assert(() => elements.Length != 1,
                 string.Format("Line {0} cannot be parsed. With {1} separator it has only one element.", line,
                     dataElementSeparator));
             for (var index = 0; index < elements.Length; index++)

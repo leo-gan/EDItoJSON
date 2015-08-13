@@ -7,10 +7,10 @@ namespace UnitTests
     public class ParserTest
     {
         [Test]
-        [TestCase(@"Samples\835.Success.txt")]
+        [TestCase(@"835.Success.txt")]
         public void Success(string inputFilePath)
         {
-            inputFilePath = @"..\..\" + inputFilePath;
+            inputFilePath = @"..\..\Samples\" + inputFilePath;
             // remove output Files
             var outputJsonFile = inputFilePath + ".Output.js";
             var outputErrorsFile = inputFilePath + ".Errors.js";
@@ -26,7 +26,7 @@ namespace UnitTests
 
         private string OutputJsonFile(ref string inputFilePath, out string outputErrorsFile)
         {
-            inputFilePath = @"..\..\" + inputFilePath;
+            inputFilePath = @"..\..\Samples\" + inputFilePath;
             // remove output Files
             var outputJsonFile = inputFilePath + ".Output.js";
             outputErrorsFile = inputFilePath + ".Errors.js";
@@ -36,18 +36,18 @@ namespace UnitTests
         }
 
         [Test]
-        [TestCase(@"Samples\835.LostGA.txt")]
-        [TestCase(@"Samples\835.LostGS.txt")]
-        [TestCase(@"Samples\835.LostST.txt")]
-        [TestCase(@"Samples\835.LostSE.txt")]
-        [TestCase(@"Samples\835.LostISA.txt")]
-        [TestCase(@"Samples\835.LostIEA.txt")]
-        [TestCase(@"Samples\835.Wrong.ControlNumber.Document.txt")]
-        [TestCase(@"Samples\835.Wrong.ControlNumber.Group.txt")]
-        [TestCase(@"Samples\835.Wrong.ControlNumber.Interchange.txt")]
+        [TestCase(@"835.LostGA.txt")]
+        [TestCase(@"835.LostGS.txt")]
+        [TestCase(@"835.LostST.txt")]
+        [TestCase(@"835.LostSE.txt")]
+        [TestCase(@"835.LostISA.txt")]
+        [TestCase(@"835.LostIEA.txt")]
+        [TestCase(@"835.Wrong.ControlNumber.Document.txt")]
+        [TestCase(@"835.Wrong.ControlNumber.Group.txt")]
+        [TestCase(@"835.Wrong.ControlNumber.Interchange.txt")]
         public void Failure(string inputFilePath)
         {
-            inputFilePath = @"..\..\" + inputFilePath;
+            inputFilePath = @"..\..\Samples\" + inputFilePath;
             // remove output Files
             var outputJsonFile = inputFilePath + ".Output.js";
             var outputErrorsFile = inputFilePath + ".Errors.js";

@@ -44,7 +44,7 @@ namespace GLD.EDItoJSON.Parser
             if (errors.Logs.Count != 0)
             {
                 errors.Report();
-                File.WriteAllText(errorsFileName, JsonConvert.SerializeObject(errors.Logs));
+                File.WriteAllLines(errorsFileName, errors.Logs);
                 return;
             }
 
@@ -61,6 +61,12 @@ namespace GLD.EDItoJSON.Parser
 
         private static void TraversAllSegments(Interchange interchange, IReadOnlyList<Segment> segments, Errors errors)
         {
+            if (segments == null || segments.Count == 0)
+            {
+                errors.NewError("No segments provided for parsing.");
+                return;
+            }
+
             Group currentGroup = null;
             Document currentDocument = null;
 
@@ -127,17 +133,22 @@ namespace GLD.EDItoJSON.Parser
             Errors errors)
         {
             var allLines = File.ReadAllLines(fileName); // TODO: use segmentSeparator
+
+            for (int index = 0; index < allLines.Length; index++)
+                if (string.IsNullOrWhiteSpace(allLines[index]))
+                    errors.NewError(string.Format("Line[{0}] is Empty. It cannot be parsed.", index+1));
+
             return allLines.Select(line => ParseSegment(line, dataElementSeparator, errors)).ToList();
         }
 
         private static Segment ParseSegment(string line, char dataElementSeparator, Errors errors)
         {
-            var elements = line.Split(dataElementSeparator);
+              var elements = line.Split(dataElementSeparator);
             errors.Assert(() => elements.Length != 0,
-                string.Format("Line {0} cannot be parsed. It cannot be split with {1} separator.", line,
-                    dataElementSeparator));
+                string.Format("Line '{0}' cannot be parsed. Is it empty?", line));
+
             errors.Assert(() => elements.Length != 1,
-                string.Format("Line {0} cannot be parsed. With {1} separator it has only one element.", line,
+                string.Format("Line '{0}' cannot be parsed. With '{1}' separator it has only one element.", line,
                     dataElementSeparator));
             for (var index = 0; index < elements.Length; index++)
                 elements[index] = elements[index].Trim();

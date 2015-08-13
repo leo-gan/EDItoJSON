@@ -45,6 +45,8 @@ namespace UnitTests
         [TestCase(@"835.Wrong.ControlNumber.Document.txt")]
         [TestCase(@"835.Wrong.ControlNumber.Group.txt")]
         [TestCase(@"835.Wrong.ControlNumber.Interchange.txt")]
+        [TestCase(@"835.Wrong.ElementSeparator.txt")]
+        [TestCase(@"835.Wrong.HasEmptyLine.txt")]
         public void Failure(string inputFilePath)
         {
             inputFilePath = @"..\..\Samples\" + inputFilePath;

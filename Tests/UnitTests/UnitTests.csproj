@@ -59,6 +59,8 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Samples\835.Wrong.HasEmptyLine.txt" />
+    <Content Include="Samples\835.Wrong.ElementSeparator.txt" />
     <Content Include="Samples\835.LostGA.txt" />
     <Content Include="Samples\835.LostGS.txt" />
     <Content Include="Samples\835.LostIEA.txt" />

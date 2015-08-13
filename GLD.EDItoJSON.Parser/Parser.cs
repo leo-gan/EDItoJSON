@@ -8,13 +8,13 @@ using Newtonsoft.Json;
 
 namespace GLD.EDItoJSON.Parser
 {
-    public  class Parser
+    public class Parser
     {
         /// <summary>
         ///     Parse input EDI file and convert it into JSON file.
         /// </summary>
         /// <param name="inputFileName"></param>
-        public  void Parse (string inputFileName)
+        public void Parse(string inputFileName)
         {
             //if (args == null || args.Length != 1)
             //{
@@ -35,7 +35,8 @@ namespace GLD.EDItoJSON.Parser
                 DataComponentSeparator = GetDataComponentSeparator(inputFileName)
             };
 
-            var segments = ReadAllSegments(inputFileName, interchange.SegmentSeparator, interchange.DataElementSeparator, errors);
+            var segments = ReadAllSegments(inputFileName, interchange.SegmentSeparator, interchange.DataElementSeparator,
+                errors);
 
             TraversAllSegments(interchange, segments, errors);
 
@@ -58,12 +59,14 @@ namespace GLD.EDItoJSON.Parser
             //Console.ReadLine();
         }
 
-        private static void TraversAllSegments(Interchange interchange, List<Segment> segments, Errors errors)
+        private static void TraversAllSegments(Interchange interchange, IReadOnlyList<Segment> segments, Errors errors)
         {
-            var currentGroup = new Group();
-            var currentDocument = new Document();
+            Group currentGroup = null;
+            Document currentDocument = null;
 
-            if( !errors.Assert(() => segments[0].Name == "ISA", "FATAL Error: The first segment ('" + segments[0].Name + "') is not ISA segment.") )
+            if (
+                !errors.Assert(() => segments[0].Name == "ISA",
+                    "FATAL Error: The first segment ('" + segments[0].Name + "') is not ISA segment."))
                 return; // FATAL error
 
             interchange.ISASegment = new ISASegment(segments[0].Elements);
@@ -77,22 +80,41 @@ namespace GLD.EDItoJSON.Parser
                         currentDocument.STSegment = new STSegment(segments[i].Elements);
                         break;
                     case "SE":
-                        currentDocument.SESegment = new SESegment(segments[i].Elements);
-                        currentGroup.Documents.Add(currentDocument);
+                        if (currentDocument != null)
+                        {
+                            currentDocument.SESegment = new SESegment(segments[i].Elements);
+                            if (currentGroup != null)
+                                currentGroup.Documents.Add(currentDocument);
+                            else
+                                errors.NewError(string.Format("Segment:'{0}' placed before GS segment",
+                                    segments[i].AsString));
+                            currentDocument = null;
+                        }
+                        else
+                            errors.NewError(string.Format("Segment:'{0}' placed before ST segment", segments[i].AsString));
                         break;
                     case "GS":
                         currentGroup = new Group();
                         currentGroup.GSSegment = new GSSegment(segments[i].Elements);
                         break;
                     case "GE":
-                        currentGroup.GESegment = new GESegment(segments[i].Elements);
-                        interchange.Groups.Add(currentGroup);
+                        if (currentGroup != null)
+                        {
+                            currentGroup.GESegment = new GESegment(segments[i].Elements);
+                            interchange.Groups.Add(currentGroup);
+                            currentGroup = null;
+                        }
+                        else
+                            errors.NewError(string.Format("Segment:'{0}' placed before GS segment", segments[i].AsString));
                         break;
                     case "IEA":
                         interchange.IEASegment = new IEASegment(segments[i].Elements);
                         break;
                     default:
-                        currentDocument.Segments.Add(segments[i]);
+                        if (currentDocument != null)
+                            currentDocument.Segments.Add(segments[i]);
+                        else
+                            errors.NewError(string.Format("Segment:'{0}' placed before ST segment", segments[i].AsString));
                         break;
                 }
             }
@@ -101,7 +123,8 @@ namespace GLD.EDItoJSON.Parser
             interchange.Validate(errors);
         }
 
-        private static List<Segment> ReadAllSegments(string fileName, char segmentSeparator, char dataElementSeparator, Errors errors)
+        private static List<Segment> ReadAllSegments(string fileName, char segmentSeparator, char dataElementSeparator,
+            Errors errors)
         {
             var allLines = File.ReadAllLines(fileName); // TODO: use segmentSeparator
             return allLines.Select(line => ParseSegment(line, dataElementSeparator, errors)).ToList();

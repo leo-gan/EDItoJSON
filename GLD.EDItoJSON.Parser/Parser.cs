@@ -16,15 +16,8 @@ namespace GLD.EDItoJSON.Parser
         /// <param name="inputFileName"></param>
         public void Parse(string inputFileName)
         {
-            //if (args == null || args.Length != 1)
-            //{
-            //    Console.WriteLine("Wrong call. Usage: >Parser inputEDIfile");
-            //    return;
-            //}
-            //Console.WriteLine("Parser Started: Input file:{0}", args[0]);
-            //var inputFileName = args[0];
             var outputFileName = inputFileName + ".Output.js";
-            var errorsFileName = inputFileName + ".errors.js";
+            var errorsFileName = inputFileName + ".Errors.txt";
 
             var errors = new Errors();
 

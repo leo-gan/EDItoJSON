@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{673B35BF-FBAA-473E-99F4-D903661B4B10}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>GLD.EDItoJSON.Parser</RootNamespace>
     <AssemblyName>GLD.EDItoJSON.Parser</AssemblyName>

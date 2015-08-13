@@ -8,21 +8,21 @@ using Newtonsoft.Json;
 
 namespace GLD.EDItoJSON.Parser
 {
-    public class Parser
+    public  class Parser
     {
         /// <summary>
-        ///     It is a test method.
+        ///     Parse input EDI file and convert it into JSON file.
         /// </summary>
-        /// <param name="args"></param>
-        private static void Main(params string[] args)
+        /// <param name="inputFileName"></param>
+        public  void Parse (string inputFileName)
         {
-            if (args == null || args.Length != 1)
-            {
-                Console.WriteLine("Wrong call. Usage: >Parser inputEDIfile");
-                return;
-            }
-            Console.WriteLine("Parser Started: Input file:{0}", args[0]);
-            var inputFileName = args[0];
+            //if (args == null || args.Length != 1)
+            //{
+            //    Console.WriteLine("Wrong call. Usage: >Parser inputEDIfile");
+            //    return;
+            //}
+            //Console.WriteLine("Parser Started: Input file:{0}", args[0]);
+            //var inputFileName = args[0];
             var outputFileName = inputFileName + ".Output.js";
             var errorsFileName = inputFileName + ".Errors.js";
 
